@@ -15,6 +15,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,6 +45,15 @@ fun MyApp() {
     var selectedItem by remember { mutableStateOf(0) }
 
     val items = listOf("Home", "Search","Settings", "Profile")
+    val systemUiController = rememberSystemUiController()
+
+    // Set the status bar color
+    SideEffect {
+        systemUiController.setStatusBarColor(
+            color = Color(0xFF5abebc) // Light blue color
+        )
+    }
+
 
     Scaffold(
         bottomBar = {
@@ -58,7 +69,10 @@ fun MyApp() {
                 .padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
-            Text(text = "Selected: ${items[selectedItem]}", fontSize = 24.sp)
+            when (selectedItem) {
+                0 -> ExploreScreen()
+
+            }
         }
     }
 }
@@ -72,22 +86,22 @@ fun BottomNavigationBar(selectedItem: Int, onItemSelected: (Int) -> Unit) {
         BottomNavigationItem(
             selected = selectedItem == 0,
             onClick = { onItemSelected(0) },
-            icon = { Icon(painter = painterResource(id = R.drawable.outline_explore), contentDescription = "Home", tint = Color.White, modifier = Modifier.size(20.dp)) },
+            icon = { Icon(painter = painterResource(id = R.drawable.outline_explore), contentDescription = "Home", tint = if (selectedItem == 0) Color(0xFF5abebc) else Color.White, modifier = Modifier.size(20.dp)) },
         )
         BottomNavigationItem(
             selected = selectedItem == 1,
             onClick = { onItemSelected(1) },
-            icon = { Icon(painter = painterResource(id = R.drawable.outline_chat), contentDescription = "Search", tint = Color.White, modifier = Modifier.size(24.dp)) },
+            icon = { Icon(painter = painterResource(id = R.drawable.outline_chat), contentDescription = "Search",tint = if (selectedItem == 1) Color(0xFF5abebc) else Color.White, modifier = Modifier.size(24.dp)) },
         )
         BottomNavigationItem(
             selected = selectedItem == 2,
             onClick = { onItemSelected(1) },
-            icon = { Icon(painter = painterResource(id = R.drawable.outline_setting), contentDescription = "Settings", tint = Color.White, modifier = Modifier.size(24.dp)) },
+            icon = { Icon(painter = painterResource(id = R.drawable.outline_setting), contentDescription = "Settings", tint = if (selectedItem == 2) Color(0xFF5abebc) else Color.White, modifier = Modifier.size(24.dp)) },
         )
         BottomNavigationItem(
             selected = selectedItem == 3,
             onClick = { onItemSelected(2) },
-            icon = { Icon(painter = painterResource(id = R.drawable.outline_profile), contentDescription = "Profile", tint = Color.White, modifier = Modifier.size(24.dp)) },
+            icon = { Icon(painter = painterResource(id = R.drawable.outline_profile), contentDescription = "Profile", tint = if (selectedItem == 3) Color(0xFF5abebc) else Color.White, modifier = Modifier.size(24.dp)) },
         )
     }
 }
