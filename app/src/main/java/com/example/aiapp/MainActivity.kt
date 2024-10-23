@@ -13,7 +13,6 @@ import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -26,7 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.aiapp.Notes.NotesScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 class MainActivity : ComponentActivity() {
@@ -42,6 +41,9 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MyApp() {
+
+
+
     var selectedItem by remember { mutableStateOf(0) }
 
     val items = listOf("Home", "Search","Settings", "Profile")
@@ -57,7 +59,7 @@ fun MyApp() {
 
     Scaffold(
         bottomBar = {
-            Column (modifier = Modifier.padding(bottom = 8.dp)){
+            Column (modifier = Modifier){
                 BottomNavigationBar(selectedItem = selectedItem, onItemSelected = { selectedItem = it })
 
             }
@@ -71,6 +73,8 @@ fun MyApp() {
         ) {
             when (selectedItem) {
                 0 -> ExploreScreen()
+                1 -> ChatScreen()
+                2 -> NotesScreen()
 
             }
         }
@@ -95,12 +99,12 @@ fun BottomNavigationBar(selectedItem: Int, onItemSelected: (Int) -> Unit) {
         )
         BottomNavigationItem(
             selected = selectedItem == 2,
-            onClick = { onItemSelected(1) },
+            onClick = { onItemSelected(2) },
             icon = { Icon(painter = painterResource(id = R.drawable.outline_setting), contentDescription = "Settings", tint = if (selectedItem == 2) Color(0xFF5abebc) else Color.White, modifier = Modifier.size(24.dp)) },
         )
         BottomNavigationItem(
             selected = selectedItem == 3,
-            onClick = { onItemSelected(2) },
+            onClick = { onItemSelected(3) },
             icon = { Icon(painter = painterResource(id = R.drawable.outline_profile), contentDescription = "Profile", tint = if (selectedItem == 3) Color(0xFF5abebc) else Color.White, modifier = Modifier.size(24.dp)) },
         )
     }
