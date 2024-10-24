@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +27,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.aiapp.ui.theme.universoFontFamily
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 fun ChatScreen() {
@@ -43,44 +46,58 @@ fun ChatScreen() {
     val context = LocalContext.current // Get the context here
 
     Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF040605)) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Scaffold (topBar = {
+            TopAppBar(
+                colors = topAppBarColors(
+                    containerColor = Color(0xFF040605),
+                    titleContentColor = Color.White,
+                ),
+                title = {
+                    Text("Chat", fontSize = 24.sp, fontWeight = FontWeight.Normal )
+                }
+            )
+        }){ paddingValues ->
 
-            // Messages list
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(8.dp),
-                reverseLayout = true
-            ) {
-                items(messages.reversed()) { msg ->
-                    ChatBubble(message = msg)
+            Column(modifier = Modifier.fillMaxSize().background(color = Color(0xFF040605))) {
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(paddingValues)
+                        .padding(8.dp),
+                    reverseLayout = true
+                ) {
+                    items(messages.reversed()) { msg ->
+                        ChatBubble(message = msg)
+                    }
+                }
+
+
+                if (isPromptLibraryVisible){
+                    PromptLibrary()
+
+                }
+
+                ChatBox(messageState = message, onSendClick = {
+                    if (message.value.isNotEmpty()) {
+                        isPromptLibraryVisible = !isPromptLibraryVisible
+                        messages = messages.toMutableList().apply { add(message.value) }
+                        message.value = ""
+                    }
+                }, onSpeechToTextClick = {
+                    showDialog = true
+                })
+
+                // Show Speech to Text dialog
+                if (showDialog) {
+                    SpeechToTextDialog(onDismiss = { showDialog = false }, context = context) { recognizedText ->
+                        message.value = recognizedText
+                        showDialog = false
+                    }
                 }
             }
 
-
-            if (isPromptLibraryVisible){
-                PromptLibrary()
-
-            }
-
-            ChatBox(messageState = message, onSendClick = {
-                if (message.value.isNotEmpty()) {
-                    isPromptLibraryVisible = !isPromptLibraryVisible
-                    messages = messages.toMutableList().apply { add(message.value) }
-                    message.value = ""
-                }
-            }, onSpeechToTextClick = {
-                showDialog = true
-            })
-
-            // Show Speech to Text dialog
-            if (showDialog) {
-                SpeechToTextDialog(onDismiss = { showDialog = false }, context = context) { recognizedText ->
-                    message.value = recognizedText
-                    showDialog = false
-                }
-            }
         }
     }
 }

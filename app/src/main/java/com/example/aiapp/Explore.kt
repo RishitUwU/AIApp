@@ -80,7 +80,7 @@ fun ExploreScreen() {
                             .height(180.dp)
                             .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
                     ){
-                        BoxContent("Write and Summarize your notes.", iconResId = R.drawable.outline_calendar)
+                        BoxContent("Schedule your day", iconResId = R.drawable.outline_calendar)
 
                     }
 
@@ -90,7 +90,7 @@ fun ExploreScreen() {
                     .size(180.dp)
                     .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
                 ){
-                    BoxContent("Write and Summarize your notes.", iconResId = R.drawable.outline_search)
+                    BoxContent("Search anything offline", iconResId = R.drawable.outline_search)
 
                 }
                 Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp),horizontalArrangement = Arrangement.SpaceBetween) {
@@ -99,7 +99,7 @@ fun ExploreScreen() {
                             .fillMaxWidth(0.5f)
                             .height(180.dp)
                             .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
-                    ){                        BoxContent("Write and Summarize your notes.", iconResId = R.drawable.outline_writing)
+                    ){                        BoxContent("Write social media content", iconResId = R.drawable.outline_writing)
                     }
 
                     Spacer(modifier = Modifier.size(8.dp))
@@ -109,7 +109,7 @@ fun ExploreScreen() {
                             .height(180.dp)
                             .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
                     ){
-                        BoxContent("Write and Summarize your notes.", iconResId = R.drawable.outline_brain)
+                        BoxContent("Chat with psychologist AI", iconResId = R.drawable.outline_brain)
 
                     }
 
@@ -142,7 +142,6 @@ fun BoxContent(boxTextContent1: String, @DrawableRes iconResId: Int ){
             fontSize = 14.sp,
             color = Color.White,
             textAlign = TextAlign.Start,
-            fontFamily = universoFontFamily, fontWeight = FontWeight.Normal,
             modifier = Modifier.padding(top = 4.dp, start = 20.dp)
 
         )
