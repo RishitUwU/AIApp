@@ -29,6 +29,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -40,96 +46,66 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.aiapp.R
 import com.example.aiapp.ui.theme.universoFontFamily
+import kotlinx.coroutines.launch
 
-@Preview
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun NotesScreen(){
+fun NotesScreen(noteDao: NoteDao, onNewNoteClick: () -> Unit) {
+    var notes by remember { mutableStateOf<List<Note>>(emptyList()) }
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            notes = noteDao.getAllNotes()
+        }
+    }
+
     Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF040605)) {
-        Scaffold (topBar = {
-            TopAppBar(
-                colors = topAppBarColors(
-                    containerColor = Color(0xFF040605),
-                    titleContentColor = Color.White,
-                ),
-                title = {
-                    Text("Notes", fontFamily = universoFontFamily, fontSize = 26.sp, fontWeight = FontWeight.Normal )
-                },
-                actions = {
-                    IconButton(onClick = { /* Handle search icon click */ }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.outline_search),
-                            contentDescription = "Search",
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }}
-            )
-        }, floatingActionButton = { CustomFloatingActionButton() },
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Notes", color = Color.White) },
+                    colors = topAppBarColors(containerColor = Color(0xFF040605)),
+                    actions = {
+                        IconButton(onClick = { /* Handle search */ }) {
+                            Icon(painter = painterResource(id = R.drawable.outline_search), contentDescription = "Search", tint = Color.White)
+                        }
+                    }
+                )
+            },
+            floatingActionButton = { CustomFloatingActionButton(onClick = onNewNoteClick) },
             floatingActionButtonPosition = FabPosition.Center
-        ){
-
-
-
-            paddingValues ->
-
-
-            LazyVerticalGrid  (  columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize()
-                    .padding(paddingValues).background(Color(0xFF040605)),
+        ) { paddingValues ->
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(Color(0xFF040605)),
                 contentPadding = PaddingValues(8.dp)
-            ){
-
-                items(count = 20) {
-                    NoteItem(onClick = {})
-
+            ) {
+                items(notes.size) { index ->
+                    val note = notes[index]
+                    NoteItem(note, onClick = {})
                 }
-
             }
-
         }
-
     }
 }
 
 
 @Composable
-fun NoteItem(onClick: () -> Unit){
-
-   // val randomHeight = Random.nextInt(110, 201).dp
-    val randomHeight = 150.dp
-    val lineHeight = 24.dp
-    val maxLines = (randomHeight.value / lineHeight.value).toInt() - 2
-
-
-    Box(modifier = Modifier.height(randomHeight).clickable { onClick }.padding(end = 8.dp, start = 8.dp, bottom = 12.dp).fillMaxWidth().background(color = Color(0xFF161719), shape = RoundedCornerShape(18.dp))){
-
-        Column (modifier = Modifier.fillMaxHeight().padding(start = 14.dp, top = 12.dp)){
-            Text(text = "27 Mar", color = Color(0xFF6f6f6f), fontSize = 12.sp, modifier = Modifier.padding(bottom = 8.dp))
-            Text(text = "Grocery List", color = Color(0xFFf5f5f5), fontSize = 18.sp)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "* Milk\n* Egg\n* Bread\n* Butter", color =Color(0xFF8f8f8f), fontSize = 14.sp, maxLines = maxLines.coerceAtLeast(1),
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
-
-        }
-    }
-
-
-}
-
-
-@Composable
-fun CustomFloatingActionButton(){
+fun CustomFloatingActionButton(onClick: () -> Unit) {
     FloatingActionButton(
         backgroundColor = Color(0xFFdcdcdc),
-        onClick = {},
+        onClick = onClick,  // Accept the onClick parameter and pass it to the FloatingActionButton
 
         modifier = Modifier
-            .padding(bottom = 24.dp).height(40.dp),
+            .padding(bottom = 24.dp)
+            .height(40.dp),
 
-        shape = RoundedCornerShape(8.dp), ) {
+        shape = RoundedCornerShape(8.dp)
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -152,4 +128,36 @@ fun CustomFloatingActionButton(){
 }
 
 
+
+@Composable
+fun NoteItem(note: Note, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .height(150.dp)
+            .clickable { onClick() }
+            .padding(end = 8.dp, start = 8.dp, bottom = 12.dp)
+            .fillMaxWidth()
+            .background(color = Color(0xFF161719), shape = RoundedCornerShape(18.dp))
+    ) {
+        Column(modifier = Modifier.fillMaxHeight().padding(start = 14.dp, top = 12.dp)) {
+            Text(text = note.timestamp.toDateString(), color = Color(0xFF6f6f6f), fontSize = 12.sp)
+            Text(text = note.title, color = Color(0xFFf5f5f5), fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = note.content,
+                color = Color(0xFF8f8f8f),
+                fontSize = 14.sp,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+fun Long.toDateString(): String {
+    // Convert timestamp to readable date
+    val date = java.util.Date(this)
+    val format = java.text.SimpleDateFormat("dd MMM, yyyy")
+    return format.format(date)
+}
 

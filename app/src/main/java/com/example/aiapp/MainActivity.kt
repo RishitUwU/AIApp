@@ -25,22 +25,36 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.room.Room
+import com.example.aiapp.Notes.NoteDao
+import com.example.aiapp.Notes.NoteDatabase
 import com.example.aiapp.Notes.NotesScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+
+        val db = Room.databaseBuilder(
+            applicationContext,
+            NoteDatabase::class.java,
+            "note_database"
+        ).build()
+
+        val noteDao = db.noteDao()
+
+
         enableEdgeToEdge()
         setContent {
-            MyApp()
+            MyApp(noteDao)
         }
     }
 }
 
 
 @Composable
-fun MyApp() {
+fun MyApp(noteDao: NoteDao) {
 
 
 
@@ -74,7 +88,8 @@ fun MyApp() {
             when (selectedItem) {
                 0 -> ExploreScreen()
                 1 -> ChatScreen()
-                2 -> NotesScreen()
+                2 -> NotesScreen(noteDao, onNewNoteClick = {})
+                3 -> SocialMediaWriterScreen()
 
             }
         }
@@ -113,5 +128,5 @@ fun BottomNavigationBar(selectedItem: Int, onItemSelected: (Int) -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun PreviewMyApp() {
-    MyApp()
+
 }
