@@ -26,11 +26,15 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.room.Room
+import com.example.aiapp.Database.ModelDao
 import com.example.aiapp.Database.NoteDao
 import com.example.aiapp.Database.NoteDatabase
+import com.example.aiapp.Database.SettingsDatabase
 import com.example.aiapp.View.Chat.ChatScreen
 import com.example.aiapp.View.Chat.SocialMediaWriterScreen
 import com.example.aiapp.View.Main.ExploreScreen
+import com.example.aiapp.View.Main.ProfileScreen
+import com.example.aiapp.View.Main.SettingsScreen
 import com.example.aiapp.View.Notes.NotesScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
@@ -39,26 +43,25 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
 
+
         val db = Room.databaseBuilder(
             applicationContext,
-            NoteDatabase::class.java,
-            "note_database"
+            SettingsDatabase::class.java,
+            "settings_database"
         ).build()
 
-        val noteDao = db.noteDao()
-
+        val modelDao = db.modelDao()
 
         enableEdgeToEdge()
         setContent {
-            MyApp(noteDao)
+            MyApp(modelDao)
         }
     }
 }
 
 
 @Composable
-fun MyApp(noteDao: NoteDao) {
-
+fun MyApp(modelDao: ModelDao) {
 
 
     var selectedItem by remember { mutableStateOf(0) }
@@ -91,8 +94,8 @@ fun MyApp(noteDao: NoteDao) {
             when (selectedItem) {
                 0 -> ExploreScreen()
                 1 -> ChatScreen()
-                2 -> NotesScreen(noteDao, onNewNoteClick = {})
-                3 -> SocialMediaWriterScreen()
+                2 -> SettingsScreen (modelDao = modelDao, onDeleteHistory = {})
+                3 -> ProfileScreen()
 
             }
         }

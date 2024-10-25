@@ -1,5 +1,10 @@
 package com.example.aiapp.View.Notes
 
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.compiler.plugins.kotlin.EmptyFunctionMetrics.composable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,10 +24,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.FabPosition
 import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Scaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -40,13 +45,65 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.room.Room
 import com.example.aiapp.Database.Note
 import com.example.aiapp.Database.NoteDao
+import com.example.aiapp.Database.NoteDatabase
 import com.example.aiapp.R
+import com.example.aiapp.ui.theme.AIAppTheme
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
 
+class AllNotes : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+
+        val db = Room.databaseBuilder(
+            applicationContext,
+            NoteDatabase::class.java,
+            "note_database"
+        ).build()
+
+        val noteDao = db.noteDao()
+
+        setContent {
+            MainNavigation(noteDao)
+
+        }
+    }
+}
+
+
+@Composable
+fun MainNavigation(noteDao: NoteDao) {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "notes") {
+        composable("notes") {
+            NotesScreen(noteDao, onNewNoteClick = {
+                navController.navigate("newNote")
+            })
+        }
+        composable("newNote") {
+            NewNoteScreen(
+                noteDao,
+                onBack = {
+                    navController.popBackStack()
+
+                }
+            )
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +122,7 @@ fun NotesScreen(noteDao: NoteDao, onNewNoteClick: () -> Unit) {
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF040605)) {
-        Scaffold(
+        androidx.compose.material.Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text("Notes", color = Color.White) },
@@ -164,8 +221,10 @@ fun NoteItem(note: Note, onClick: () -> Unit) {
 
 fun Long.toDateString(): String {
     // Convert timestamp to readable date
-    val date = java.util.Date(this)
-    val format = java.text.SimpleDateFormat("dd MMM, yyyy")
+    val date = Date(this)
+    val format = SimpleDateFormat("dd MMM, yyyy")
     return format.format(date)
 }
+
+
 

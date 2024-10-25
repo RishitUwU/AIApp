@@ -1,6 +1,7 @@
 package com.example.aiapp.View.Main
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -32,6 +34,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.aiapp.R
+import com.example.aiapp.View.Notes.AllNotes
 import com.example.aiapp.ui.theme.universoFontFamily
 
 
@@ -40,6 +43,10 @@ import com.example.aiapp.ui.theme.universoFontFamily
 @Preview
 @Composable
 fun ExploreScreen() {
+
+
+    val context = LocalContext.current
+
 
     Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF040605)) {
         Scaffold(
@@ -67,8 +74,9 @@ fun ExploreScreen() {
                             .fillMaxWidth(0.5f)
                             .height(180.dp)
                             .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
-                            .clickable {  },
-
+                            .clickable {
+                                val intent  = Intent(context, AllNotes::class.java )
+                                context.startActivity(intent) },
 
                         ){
                         BoxContent("Write and Summarize your notes.", iconResId = R.drawable.outline_writing)
@@ -128,7 +136,6 @@ fun BoxContent(boxTextContent1: String, @DrawableRes iconResId: Int ){
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        // Icon at the top start with padding
         Icon(
             painter = painterResource(id = iconResId), // Replace with your icon
             contentDescription = "Icon",
