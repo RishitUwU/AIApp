@@ -1,4 +1,4 @@
-package com.example.aiapp
+package com.example.aiapp.View.Chat
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

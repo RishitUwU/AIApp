@@ -1,8 +1,13 @@
-package com.example.aiapp.Notes
+package com.example.aiapp.Database
 
+import androidx.room.Dao
+import androidx.room.Database
 import androidx.room.Entity
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
-import androidx.room.*
+import androidx.room.Query
+import androidx.room.RoomDatabase
 
 
 @Entity(tableName = "notes")

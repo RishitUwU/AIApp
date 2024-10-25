@@ -1,6 +1,5 @@
-package com.example.aiapp.Notes
+package com.example.aiapp.View.Notes
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,18 +40,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.aiapp.Database.Note
+import com.example.aiapp.Database.NoteDao
 import com.example.aiapp.R
-import com.example.aiapp.ui.theme.universoFontFamily
 import kotlinx.coroutines.launch
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(noteDao: NoteDao, onNewNoteClick: () -> Unit) {
+
+
     var notes by remember { mutableStateOf<List<Note>>(emptyList()) }
     val coroutineScope = rememberCoroutineScope()
+
+
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -87,6 +91,10 @@ fun NotesScreen(noteDao: NoteDao, onNewNoteClick: () -> Unit) {
                 items(notes.size) { index ->
                     val note = notes[index]
                     NoteItem(note, onClick = {})
+
+
+
+
                 }
             }
         }

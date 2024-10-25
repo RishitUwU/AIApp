@@ -1,4 +1,4 @@
-package com.example.aiapp
+package com.example.aiapp.View.Main
 
 import android.annotation.SuppressLint
 import androidx.annotation.DrawableRes
@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.aiapp.R
 import com.example.aiapp.ui.theme.universoFontFamily
 
 

@@ -26,9 +26,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.room.Room
-import com.example.aiapp.Notes.NoteDao
-import com.example.aiapp.Notes.NoteDatabase
-import com.example.aiapp.Notes.NotesScreen
+import com.example.aiapp.Database.NoteDao
+import com.example.aiapp.Database.NoteDatabase
+import com.example.aiapp.View.Chat.ChatScreen
+import com.example.aiapp.View.Chat.SocialMediaWriterScreen
+import com.example.aiapp.View.Main.ExploreScreen
+import com.example.aiapp.View.Notes.NotesScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 class MainActivity : ComponentActivity() {

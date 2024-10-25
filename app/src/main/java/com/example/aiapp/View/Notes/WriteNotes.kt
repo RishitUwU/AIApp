@@ -1,4 +1,4 @@
-package com.example.aiapp.Notes
+package com.example.aiapp.View.Notes
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,8 +26,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.aiapp.Database.Note
+import com.example.aiapp.Database.NoteDao
 import kotlinx.coroutines.launch
 
 @Composable
@@ -74,8 +75,7 @@ fun NewNoteScreen(noteDao: NoteDao, onSave: () -> Unit) {
                         val note = Note(
                             title = title,
                             content = noteContent.text,
-                            timestamp = System.currentTimeMillis()
-                        )
+                            timestamp = System.currentTimeMillis())
 
                         coroutineScope.launch {
                             noteDao.insert(note)
