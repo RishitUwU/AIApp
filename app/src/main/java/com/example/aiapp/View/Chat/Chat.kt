@@ -6,9 +6,11 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,6 +41,8 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,17 +55,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.aiapp.R
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
-fun ChatScreen() {
+fun ChatScreen(navController: NavHostController) {
     var isPromptLibraryVisible by remember { mutableStateOf(true) }
     val message = remember { mutableStateOf("") }
+    var isTTS by remember { mutableStateOf(false) }
+
     var messages by remember {
         mutableStateOf(
             listOf(
@@ -81,11 +87,34 @@ fun ChatScreen() {
                 ),
                 title = {
                     Text("Chat", fontSize = 24.sp, fontWeight = FontWeight.Normal )
+                },
+                actions = {
+                    IconButton(
+                        onClick = { isTTS=!isTTS },
+                        modifier = Modifier
+                            .size(54.dp)
+                            .padding(end = 16.dp)
+                            .background(
+                                color = if (isTTS) Color.White else Color(0xFF161719),
+                                shape = CircleShape
+                            )
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.baseline_volume_up_24),
+                            contentDescription = "Speech to text",
+                            tint = if (isTTS) Color.Black else Color(0xFF5abebc),
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
+
+
             )
         }){ paddingValues ->
 
-            Column(modifier = Modifier.fillMaxSize().background(color = Color(0xFF040605))) {
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .background(color = Color(0xFF040605))) {
 
                 LazyColumn(
                     modifier = Modifier
@@ -102,7 +131,7 @@ fun ChatScreen() {
 
 
                 if (isPromptLibraryVisible){
-                    PromptLibrary()
+                    PromptLibrary(navController)
 
                 }
 
@@ -111,10 +140,16 @@ fun ChatScreen() {
                         isPromptLibraryVisible = !isPromptLibraryVisible
                         messages = messages.toMutableList().apply { add(message.value) }
                         message.value = ""
+
                     }
                 }, onSpeechToTextClick = {
                     showDialog = true
                 })
+
+
+                if (isTTS) {
+                    rememberTTS(context, isTTS)?.speak(message.value, TextToSpeech.QUEUE_FLUSH, null, "TTS_MESSAGE_ID")
+                }
 
                 // Show Speech to Text dialog
                 if (showDialog) {
@@ -169,7 +204,8 @@ fun ChatBox(messageState: MutableState<String>, onSendClick: () -> Unit, onSpeec
 fun SpeechToTextButton(onClick: () -> Unit) {
     IconButton(
         onClick = onClick,
-        modifier = Modifier.size(54.dp)
+        modifier = Modifier
+            .size(54.dp)
             .background(color = Color(0xFF161719), shape = RoundedCornerShape(100.dp))
     ) {
         Icon(
@@ -289,7 +325,8 @@ fun ChatBubble(message: String) {
 fun SendButton(onSendClick: () -> Unit) {
     IconButton(
         onClick = onSendClick,
-        modifier = Modifier.size(54.dp)
+        modifier = Modifier
+            .size(54.dp)
             .background(color = Color(0xFF161719), shape = RoundedCornerShape(100.dp)) // Adjust the size of the button
     ) {
         Icon(
@@ -302,7 +339,7 @@ fun SendButton(onSendClick: () -> Unit) {
 }
 
 @Composable
-fun PromptLibrary() {
+fun PromptLibrary(navController: NavHostController) {
 
 
     Column(
@@ -329,6 +366,9 @@ fun PromptLibrary() {
                     .size(36.dp)
                     .background(Color.Gray, shape = CircleShape)
                     .padding(8.dp) // Add background to the icon
+                    .clickable {
+                        navController.navigate("promptLibrary")
+                    }
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -351,4 +391,32 @@ fun TagButton(text: String) {
     ) {
         Text(text = text, fontSize = 14.sp)
     }
+}
+
+
+
+@Composable
+fun rememberTTS(context: Context, isTTS: Boolean): TextToSpeech? {
+    var tts: TextToSpeech? by remember { mutableStateOf(null) }
+
+    LaunchedEffect(isTTS) {
+        if (isTTS) {
+            tts = TextToSpeech(context) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    tts?.language = Locale.getDefault()
+                }
+            }
+        } else {
+            tts?.shutdown()
+            tts = null
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            tts?.shutdown()
+        }
+    }
+
+    return tts
 }

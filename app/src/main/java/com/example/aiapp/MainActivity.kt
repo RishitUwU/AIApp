@@ -25,17 +25,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.example.aiapp.Database.ModelDao
-import com.example.aiapp.Database.NoteDao
-import com.example.aiapp.Database.NoteDatabase
 import com.example.aiapp.Database.SettingsDatabase
 import com.example.aiapp.View.Chat.ChatScreen
-import com.example.aiapp.View.Chat.SocialMediaWriterScreen
+import com.example.aiapp.View.Chat.PromptLibraryScreen
 import com.example.aiapp.View.Main.ExploreScreen
 import com.example.aiapp.View.Main.ProfileScreen
 import com.example.aiapp.View.Main.SettingsScreen
-import com.example.aiapp.View.Notes.NotesScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 class MainActivity : ComponentActivity() {
@@ -58,7 +58,27 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+@Composable
+fun ExploreNav() {
+    val navController = rememberNavController()
 
+    NavHost(navController = navController, startDestination = "explore") {
+        composable("explore") { ExploreScreen(navController) }
+        composable("chat") { ChatScreen(navController) }
+    }
+}
+
+
+@Composable
+fun ChatNav() {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "chat") {
+        composable("chat") { ChatScreen(navController) }
+        composable("promptLibrary") { PromptLibraryScreen() }
+
+    }
+}
 
 @Composable
 fun MyApp(modelDao: ModelDao) {
@@ -92,8 +112,8 @@ fun MyApp(modelDao: ModelDao) {
             contentAlignment = Alignment.Center
         ) {
             when (selectedItem) {
-                0 -> ExploreScreen()
-                1 -> ChatScreen()
+                0 -> ExploreNav()
+                1 -> ChatNav()
                 2 -> SettingsScreen (modelDao = modelDao, onDeleteHistory = {})
                 3 -> ProfileScreen()
 

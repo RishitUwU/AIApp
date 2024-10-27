@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.compiler.plugins.kotlin.EmptyFunctionMetrics.composable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,9 +26,11 @@ import androidx.compose.material.FloatingActionButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
@@ -45,7 +46,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
@@ -56,7 +56,6 @@ import com.example.aiapp.Database.Note
 import com.example.aiapp.Database.NoteDao
 import com.example.aiapp.Database.NoteDatabase
 import com.example.aiapp.R
-import com.example.aiapp.ui.theme.AIAppTheme
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -81,6 +80,8 @@ class AllNotes : ComponentActivity() {
         }
     }
 }
+
+
 
 
 @Composable
@@ -108,16 +109,28 @@ fun MainNavigation(noteDao: NoteDao) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(noteDao: NoteDao, onNewNoteClick: () -> Unit) {
-
-
     var notes by remember { mutableStateOf<List<Note>>(emptyList()) }
+    var filteredNotes by remember { mutableStateOf<List<Note>>(emptyList()) }
+    var isSearching by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
-
-
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             notes = noteDao.getAllNotes()
+            filteredNotes = notes // Initially, display all notes
+        }
+    }
+
+    fun filterNotes(query: String) {
+        searchQuery = query
+        filteredNotes = if (query.isEmpty()) {
+            notes // Show all notes if search query is empty
+        } else {
+            notes.filter {
+                it.title.contains(query, ignoreCase = true) ||
+                        it.content.contains(query, ignoreCase = true)
+            }
         }
     }
 
@@ -125,11 +138,39 @@ fun NotesScreen(noteDao: NoteDao, onNewNoteClick: () -> Unit) {
         androidx.compose.material.Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Notes", color = Color.White) },
+                    title = {
+                        if (isSearching) {
+                            TextField(
+                                value = searchQuery,
+                                onValueChange = { filterNotes(it) },
+                                placeholder = { Text("Search notes...", color = Color.Gray) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFF161719), RoundedCornerShape(16.dp)),
+                                textStyle = LocalTextStyle.current.copy(color = Color.White),
+                                singleLine = true,
+                                colors = TextFieldDefaults.textFieldColors(
+                                    cursorColor = Color.White,
+                                    focusedIndicatorColor = Color.Transparent, // Remove the underline
+                                    unfocusedIndicatorColor = Color.Transparent
+                                )
+                            )
+                        } else {
+                            Text("Notes", color = Color.White)
+                        }
+                    },
                     colors = topAppBarColors(containerColor = Color(0xFF040605)),
                     actions = {
-                        IconButton(onClick = { /* Handle search */ }) {
-                            Icon(painter = painterResource(id = R.drawable.outline_search), contentDescription = "Search", tint = Color.White)
+                        IconButton(onClick = {
+                            isSearching = !isSearching
+                            if (!isSearching) filterNotes("") // Reset search when closing
+                        }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.outline_search),
+                                contentDescription = "Search",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 )
@@ -145,19 +186,14 @@ fun NotesScreen(noteDao: NoteDao, onNewNoteClick: () -> Unit) {
                     .background(Color(0xFF040605)),
                 contentPadding = PaddingValues(8.dp)
             ) {
-                items(notes.size) { index ->
-                    val note = notes[index]
+                items(filteredNotes.size) { index ->
+                    val note = filteredNotes[index]
                     NoteItem(note, onClick = {})
-
-
-
-
                 }
             }
         }
     }
 }
-
 
 @Composable
 fun CustomFloatingActionButton(onClick: () -> Unit) {
@@ -206,6 +242,7 @@ fun NoteItem(note: Note, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.fillMaxHeight().padding(start = 14.dp, top = 12.dp)) {
             Text(text = note.timestamp.toDateString(), color = Color(0xFF6f6f6f), fontSize = 12.sp)
+            Spacer(modifier = Modifier.height(4.dp))
             Text(text = note.title, color = Color(0xFFf5f5f5), fontSize = 18.sp)
             Spacer(modifier = Modifier.height(8.dp))
             Text(

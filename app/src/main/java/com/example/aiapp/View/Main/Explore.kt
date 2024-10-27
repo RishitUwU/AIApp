@@ -30,9 +30,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import com.example.aiapp.R
 import com.example.aiapp.View.Notes.AllNotes
 import com.example.aiapp.ui.theme.universoFontFamily
@@ -40,12 +40,13 @@ import com.example.aiapp.ui.theme.universoFontFamily
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
-fun ExploreScreen() {
+fun ExploreScreen(navController: NavHostController) {
 
 
     val context = LocalContext.current
+
+
 
 
     Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF040605)) {
@@ -98,8 +99,12 @@ fun ExploreScreen() {
                 Box(modifier = Modifier.fillMaxWidth()
                     .size(180.dp)
                     .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
+                    .clickable {
+                        navController.navigate("chat")
+
+                    }
                 ){
-                    BoxContent("Search anything offline", iconResId = R.drawable.outline_search)
+                    BoxContent("Search anything online", iconResId = R.drawable.outline_search)
 
                 }
                 Row(modifier = Modifier.fillMaxWidth().padding(top = 8.dp),horizontalArrangement = Arrangement.SpaceBetween) {
@@ -108,6 +113,10 @@ fun ExploreScreen() {
                             .fillMaxWidth(0.5f)
                             .height(180.dp)
                             .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
+                            .clickable {
+                                navController.navigate("chat")
+
+                            }
                     ){                        BoxContent("Write social media content", iconResId = R.drawable.outline_writing)
                     }
 
@@ -116,6 +125,10 @@ fun ExploreScreen() {
                         modifier = Modifier
                             .fillMaxWidth(1f)
                             .height(180.dp)
+                            .clickable {
+                                navController.navigate("chat")
+
+                            }
                             .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
                     ){
                         BoxContent("Chat with psychologist AI", iconResId = R.drawable.outline_brain)
