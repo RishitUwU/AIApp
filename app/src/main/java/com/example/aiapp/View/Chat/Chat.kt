@@ -8,11 +8,11 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,17 +22,23 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -53,28 +59,38 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.aiapp.Model.ChatMessage
 import com.example.aiapp.R
+import com.example.aiapp.ViewModel.ChatViewModel
 import java.util.Locale
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(navController: NavHostController) {
-    var isPromptLibraryVisible by remember { mutableStateOf(true) }
-    val message = remember { mutableStateOf("") }
-    var isTTS by remember { mutableStateOf(false) }
+fun ChatScreen(navController: NavHostController, chatScreenTitle: String, modelPath: String,
+               chatViewModel: ChatViewModel = viewModel(
+                   factory = ChatViewModel.getFactory(LocalContext.current.applicationContext, modelPath)
+               )) {
 
+    val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
+    val textInputEnabled by chatViewModel.isTextInputEnabled.collectAsStateWithLifecycle()
+
+    var isPromptLibraryVisible by remember { mutableStateOf(isPromptLibraryVisibleCheck(chatScreenTitle)) }
+    var isSocialMediaListVisible by remember { mutableStateOf(chatScreenTitle=="Social media writer") }
+
+    var message = remember { mutableStateOf("") }
+    var isTTS by remember { mutableStateOf(false) }
     var messages by remember {
-        mutableStateOf(
-            listOf(
-                "Hello! How can I assist you?"
-            )
-        )
-    }
+        mutableStateOf(emptyList<String>()) }
     var showDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current // Get the context here
 
@@ -86,7 +102,7 @@ fun ChatScreen(navController: NavHostController) {
                     titleContentColor = Color.White,
                 ),
                 title = {
-                    Text("Chat", fontSize = 24.sp, fontWeight = FontWeight.Normal )
+                    Text("$chatScreenTitle", fontSize = 24.sp, fontWeight = FontWeight.Normal )
                 },
                 actions = {
                     IconButton(
@@ -124,7 +140,7 @@ fun ChatScreen(navController: NavHostController) {
                         .padding(8.dp),
                     reverseLayout = true
                 ) {
-                    items(messages.reversed()) { msg ->
+                    items(uiState.messages) { msg ->
                         ChatBubble(message = msg)
                     }
                 }
@@ -134,10 +150,14 @@ fun ChatScreen(navController: NavHostController) {
                     PromptLibrary(navController)
 
                 }
+                if (isSocialMediaListVisible){
+                    SocialMediaList(socialMediaNames = listOf("Instagram", "LinkedIn", "Twitter", "Reddit"))
+                }
 
                 ChatBox(messageState = message, onSendClick = {
                     if (message.value.isNotEmpty()) {
-                        isPromptLibraryVisible = !isPromptLibraryVisible
+                        isPromptLibraryVisible = false
+                        isSocialMediaListVisible =false
                         messages = messages.toMutableList().apply { add(message.value) }
                         message.value = ""
 
@@ -287,38 +307,72 @@ fun startSpeechToText(context: Context, onResult: (String) -> Unit) {
 }
 
 @Composable
-fun ChatBubble(message: String) {
-    Box(
-        modifier = Modifier
-            .padding(4.dp)
-            .background(Color(0xFF161719), shape = RoundedCornerShape(18.dp))
-            .padding(16.dp)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Image(
-                painter = painterResource(R.drawable.bot),
-                contentDescription = "Bot Icon",
-                modifier = Modifier
-                    .padding(end = 8.dp)
-                    .size(width = 40.dp, height = 40.dp)
-                    .background(color = Color.White, shape = RoundedCornerShape(100.dp))
-            )
-            Text(text = message, fontSize = 16.sp, color = Color.White, modifier = Modifier.weight(1f))
-        }
+fun ChatBubble(message: ChatMessage) {
 
-        Icon(
-            painter = painterResource(id = R.drawable.outline_copy),
-            contentDescription = "Copy",
-            tint = Color(0xFF5abebc),
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .size(14.dp)
-        )
+
+    val backgroundColor = if (message.isFromUser) {
+        MaterialTheme.colorScheme.tertiaryContainer
+    } else {
+        MaterialTheme.colorScheme.secondaryContainer
     }
+
+    val bubbleShape = if (message.isFromUser) {
+        RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
+    } else {
+        RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+    }
+    val horizontalAlignment = if (message.isFromUser) {
+        Alignment.End
+    } else {
+        Alignment.Start
+    }
+
+
+    Column(
+        horizontalAlignment = horizontalAlignment,
+        modifier = Modifier
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .fillMaxWidth()
+    ) {
+        val author = if (message.isFromUser) {
+            stringResource(R.string.user_label)
+        } else {
+            stringResource(R.string.model_label)
+        }
+        Text(
+            text = author,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        Row {
+            BoxWithConstraints {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = backgroundColor),
+                    shape = bubbleShape,
+                    modifier = Modifier.widthIn(0.dp, maxWidth * 0.9f)
+                ) {
+                    if (message.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    } else {
+                        Text(
+                            text = message.message,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+@Preview
+@Composable
+fun Acha(){
+    ChatBubble(message = ChatMessage(author = "", id = "", rawMessage = "This is sample message"))
+
 }
 
 @Composable
@@ -420,3 +474,37 @@ fun rememberTTS(context: Context, isTTS: Boolean): TextToSpeech? {
 
     return tts
 }
+
+
+
+
+
+fun isPromptLibraryVisibleCheck(chatScreenTitle: String): Boolean {
+    return !(chatScreenTitle == "Social media writer" ||
+            chatScreenTitle == "Chat with yourself" ||
+            chatScreenTitle == "Search online")
+}
+
+
+@Composable
+fun SocialMediaNameBox(socialMediaName : String = "Facebook"){
+    Spacer(Modifier.width(8.dp))
+    Box(modifier = Modifier.background(shape = RoundedCornerShape(28.dp), color = Color(0xFF161719))){
+        Text(text = socialMediaName, color = Color(0xFFf5f5f5), fontSize = 18.sp, modifier = Modifier.padding(horizontal =10.dp).padding(8.dp))
+    }
+
+}
+
+
+@Composable
+fun SocialMediaList(socialMediaNames: List<String>) {
+    LazyRow(modifier = Modifier.fillMaxWidth()) {
+        items(socialMediaNames) { name ->
+            SocialMediaNameBox(name)
+        }
+    }
+    Spacer(Modifier.height(16.dp))
+
+}
+
+

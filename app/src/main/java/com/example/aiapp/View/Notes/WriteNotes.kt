@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -86,12 +87,15 @@ fun NewNoteScreen(noteDao: NoteDao, onBack: () -> Unit) {
                         onValueChange = { title = it },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(Color(0xFF2A2B2E), shape = RoundedCornerShape(8.dp))
-                            .padding(16.dp),
+                            .height(60.dp)
+                            .padding(end = 12.dp, start = 12.dp)
+                            .background(Color(0xFF2A2B2E), shape = RoundedCornerShape(8.dp)),
                         textStyle = LocalTextStyle.current.copy(color = Color.White),
-                        decorationBox = { innerTextField ->
+                        decorationBox = {
+                            innerTextField ->
                             if (title.text.isEmpty()) {
-                                Text("Title", color = Color.Gray, fontSize = 22.sp)
+
+                                Text("Title", color = Color.Gray, fontSize = 22.sp, modifier = Modifier.padding(start = 12.dp, top = 8.dp))
                             }
                             innerTextField()
                         }
@@ -103,6 +107,7 @@ fun NewNoteScreen(noteDao: NoteDao, onBack: () -> Unit) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .fillMaxHeight()
+                            .padding(end = 12.dp, start = 12.dp)
                             .background(Color(0xFF2A2B2E), shape = RoundedCornerShape(8.dp))
                             .padding(16.dp),
                         textStyle = LocalTextStyle.current.copy(color = Color.White),

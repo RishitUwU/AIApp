@@ -97,6 +97,10 @@ dependencies {
     implementation "androidx.room:room-ktx:$room_version"
 
 
+    implementation ("com.google.mediapipe:tasks-genai:0.10.16")
+
+
+
 
 
 

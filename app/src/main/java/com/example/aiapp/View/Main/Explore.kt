@@ -100,7 +100,7 @@ fun ExploreScreen(navController: NavHostController) {
                     .size(180.dp)
                     .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
                     .clickable {
-                        navController.navigate("chat")
+                        navController.navigate("searchOnline")
 
                     }
                 ){
@@ -114,7 +114,7 @@ fun ExploreScreen(navController: NavHostController) {
                             .height(180.dp)
                             .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
                             .clickable {
-                                navController.navigate("chat")
+                                navController.navigate("socialMediaWriter")
 
                             }
                     ){                        BoxContent("Write social media content", iconResId = R.drawable.outline_writing)
@@ -126,12 +126,12 @@ fun ExploreScreen(navController: NavHostController) {
                             .fillMaxWidth(1f)
                             .height(180.dp)
                             .clickable {
-                                navController.navigate("chat")
+                                navController.navigate("chatWithYourself")
 
                             }
                             .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
                     ){
-                        BoxContent("Chat with psychologist AI", iconResId = R.drawable.outline_brain)
+                        BoxContent("Chat with yourself", iconResId = R.drawable.outline_brain)
 
                     }
 

@@ -1,9 +1,22 @@
 package com.example.aiapp
 
+import android.Manifest
+import android.app.AlertDialog
+import android.app.DownloadManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,24 +38,73 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.example.aiapp.Database.ModelDao
 import com.example.aiapp.Database.SettingsDatabase
+import com.example.aiapp.Model.InferenceModel
 import com.example.aiapp.View.Chat.ChatScreen
 import com.example.aiapp.View.Chat.PromptLibraryScreen
 import com.example.aiapp.View.Main.ExploreScreen
 import com.example.aiapp.View.Main.ProfileScreen
 import com.example.aiapp.View.Main.SettingsScreen
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
 
 class MainActivity : ComponentActivity() {
+
+
+
+
+    private var modelPath: String? = null
+    private var downloadId: Long = 0L
+
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            showPermissionToast()
+        } else {
+            Toast.makeText(this, "Storage permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+
+    private fun requestStoragePermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                showPermissionToast()
+
+            } else {
+                requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
+        } else {
+            showPermissionToast()
+
+        }
+    }
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
+        ContextCompat.registerReceiver(
+            this,
+            onDownloadComplete,
+            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
 
         val db = Room.databaseBuilder(
             applicationContext,
@@ -56,32 +118,139 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApp(modelDao)
         }
+
+
+        requestStoragePermission()
+
+
     }
+
+
+
+    private fun showPermissionToast() {
+        Toast.makeText(this, "Do you want to allow access to your files?", Toast.LENGTH_LONG).show()
+        AlertDialog.Builder(this)
+            .setTitle("Access Files")
+            .setMessage("Do you want to download the model file (falcon_cpu.bin)?")
+            .setPositiveButton("Yes") { _, _ ->
+                checkAndDownloadModel()
+
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss()
+            }
+
+            .show()
+    }
+
+
+    private fun checkAndDownloadModel() {
+        val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "falcon_cpu.bin")
+        if (file.exists()) {
+            modelPath = file.path
+            initializeModel()
+        } else {
+            downloadFile()
+//            downloadAndSaveFile(
+//                "https://s3.ap-south-1.amazonaws.com/www.soundcast.ai/falcon_cpu.bin",
+//                "falcon_cpu.bin"
+//            )
+        }
+    }
+
+
+
+    private fun downloadFile() {
+        val url = "https://s3.ap-south-1.amazonaws.com/www.soundcast.ai/falcon_cpu.bin"
+        val request = DownloadManager.Request(Uri.parse(url)).apply {
+            setTitle("Downloading falcon_cpu.bin")
+            setDescription("The LLM file is being downloaded.")
+            setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "falcon_cpu.bin")
+        }
+
+        val downloadManager = ContextCompat.getSystemService(this, DownloadManager::class.java)
+        if (downloadManager != null) {
+            downloadId = downloadManager.enqueue(request)
+        }
+    }
+
+    private val onDownloadComplete: BroadcastReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            if (id == downloadId) {
+                val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "falcon_cpu.bin")
+                if (file.exists()) {
+                    modelPath = file.path
+                    initializeModel()
+                } else {
+                    Toast.makeText(context, "Download failed", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+
+    private fun initializeModel() {
+        modelPath?.let { path ->
+            lifecycleScope.launch {
+                // Load the model in the IO context to avoid blocking the main thread
+                val modelInitialized = withContext(Dispatchers.IO) {
+                    try {
+                        InferenceModel.getInstance(this@MainActivity, path) // Load model
+                        true // Return true if successful
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        false // Return false if there was an error
+                    }
+                }
+
+                if (modelInitialized) {
+                    // Navigate to the chat screen after the model is successfully initialized
+                    runOnUiThread {
+//                        navController.navigate(CHAT_SCREEN) {
+//                            popUpTo(START_SCREEN) { inclusive = true }
+//                            launchSingleTop = true
+//                        }
+                    }
+                } else {
+                    // Handle model initialization failure (e.g., show an error message)
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "Failed to initialize the model", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
 }
 @Composable
-fun ExploreNav() {
+fun ExploreNav(modelPath: String? = null) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "explore") {
         composable("explore") { ExploreScreen(navController) }
-        composable("chat") { ChatScreen(navController) }
+        composable("chat") { ChatScreen(navController, "Chat", modelPath = modelPath ?: "") }
+        composable("socialMediaWriter") { ChatScreen(navController, "Social media writer", modelPath = modelPath ?: "") }
+        composable("chatWithYourself") { ChatScreen(navController, "Chat with yourself", modelPath = modelPath ?: "") }
+        composable("searchOnline") { ChatScreen(navController, "Search online", modelPath = modelPath ?: "") }
     }
 }
 
 
 @Composable
-fun ChatNav() {
+fun ChatNav(modelPath: String? = null) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "chat") {
-        composable("chat") { ChatScreen(navController) }
+        composable("chat") { ChatScreen(navController, "Chat", modelPath = modelPath ?: "") }
         composable("promptLibrary") { PromptLibraryScreen() }
 
     }
 }
 
 @Composable
-fun MyApp(modelDao: ModelDao) {
+fun MyApp(modelDao: ModelDao, modelPath: String? = null) {
 
 
     var selectedItem by remember { mutableStateOf(0) }
@@ -112,8 +281,8 @@ fun MyApp(modelDao: ModelDao) {
             contentAlignment = Alignment.Center
         ) {
             when (selectedItem) {
-                0 -> ExploreNav()
-                1 -> ChatNav()
+                0 -> ExploreNav(modelPath = modelPath)
+                1 -> ChatNav(modelPath = modelPath)
                 2 -> SettingsScreen (modelDao = modelDao, onDeleteHistory = {})
                 3 -> ProfileScreen()
 
@@ -156,3 +325,5 @@ fun BottomNavigationBar(selectedItem: Int, onItemSelected: (Int) -> Unit) {
 fun PreviewMyApp() {
 
 }
+
+
