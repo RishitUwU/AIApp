@@ -1,15 +1,10 @@
-package com.example.aiapp.ViewModel
+package com.example.aiapp.others
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import com.example.aiapp.Model.InferenceModel
-import com.example.aiapp.View.Chat.GemmaUiState
-import com.example.aiapp.View.Chat.MODEL_PREFIX
-import com.example.aiapp.View.Chat.USER_PREFIX
-import com.example.aiapp.View.Chat.UiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,8 +13,7 @@ import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.launch
 
 class ChatViewModel(
-    private val inferenceModel: InferenceModel,
-    private var modelPath: String
+    private val inferenceModel: InferenceModel
 ) : ViewModel() {
 
     // `GemmaUiState()` is optimized for the Gemma model.
@@ -33,14 +27,14 @@ class ChatViewModel(
     val isTextInputEnabled: StateFlow<Boolean> =
         _textInputEnabled.asStateFlow()
 
-    fun sendMessage(userMessage: String) {
+    fun sendMessage(userMessage: String, addOnPrompt:String=" ") {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.value.addMessage(userMessage, USER_PREFIX)
             var currentMessageId: String? = _uiState.value.createLoadingMessage()
             setInputEnabled(false)
             try {
                 val fullPrompt = _uiState.value.fullPrompt
-                inferenceModel.generateResponseAsync(fullPrompt)
+                inferenceModel.generateResponseAsync("$addOnPrompt $fullPrompt")
                 inferenceModel.partialResults
                     .collectIndexed { index, (partialResult, done) ->
                         currentMessageId?.let {
@@ -68,10 +62,10 @@ class ChatViewModel(
     }
 
     companion object {
-        fun getFactory(context: Context,modelPath:String) = object : ViewModelProvider.Factory {
+        fun getFactory(context: Context) = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
-                val inferenceModel = InferenceModel.getInstance(context,modelPath)
-                return ChatViewModel(inferenceModel,modelPath) as T
+                val inferenceModel = InferenceModel.getInstance(context)
+                return ChatViewModel(inferenceModel) as T
             }
         }
     }

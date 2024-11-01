@@ -8,7 +8,9 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,10 +51,10 @@ import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,51 +64,78 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.aiapp.Model.ChatMessage
 import com.example.aiapp.R
-import com.example.aiapp.ViewModel.ChatViewModel
+import com.example.aiapp.others.ChatMessage
+import com.example.aiapp.others.ChatViewModel
+import com.example.aiapp.others.UiState
 import java.util.Locale
+
+
+@Composable
+internal fun ChatRoute(
+    chatViewModel: ChatViewModel = viewModel(
+        factory = ChatViewModel.getFactory(LocalContext.current.applicationContext)
+    ),
+    navController: NavHostController,
+    chatScreenTitle: String
+) {
+    val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
+    val textInputEnabled by chatViewModel.isTextInputEnabled.collectAsStateWithLifecycle()
+    ChatScreen(
+        uiState,
+        textInputEnabled,
+        onSendMessage = { addOnPrompt, message ->
+            chatViewModel.sendMessage(addOnPrompt =addOnPrompt , userMessage = message)
+        },
+        navController = navController,
+        chatScreenTitle = chatScreenTitle
+
+    )
+}
+val promptMap = mapOf(
+    "Instagram" to "Instagram prompt text here",
+    "LinkedIn" to "Please ignore all previous instructions. Please respond only in the English language. You are a LinkedIn content creator.   Do not self reference. Do not explain what you are doing. Your content should be engaging, informative, and relevant LinkedIn posts for various professionals across different industries. Please include industry insights, personal experiences, and thought leadership while maintaining a genuine and conversational tone. Please create a post about the  for the  industry. Add emojis to the content when appropriate and write from a personal experience. The content should be between 390 - 400 words long and spaced out so that it's easy for readers to scan through. Please add relevant hashtags to the post and encourage the readers to comment.",
+    "Twitter" to "Twitter prompt text here",
+    "Reddit" to "Reddit prompt text here"
+)
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen(navController: NavHostController, chatScreenTitle: String, modelPath: String,
-               chatViewModel: ChatViewModel = viewModel(
-                   factory = ChatViewModel.getFactory(LocalContext.current.applicationContext, modelPath)
-               )) {
-
-    val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
-    val textInputEnabled by chatViewModel.isTextInputEnabled.collectAsStateWithLifecycle()
-
+fun ChatScreen(
+    uiState: UiState,
+    textInputEnabled: Boolean = true,
+    onSendMessage: (String, String) -> Unit,
+    navController: NavHostController,
+    chatScreenTitle: String
+) {
+    var userMessage by rememberSaveable { mutableStateOf("") }
+    var addOnPrompt by rememberSaveable { mutableStateOf("") }
     var isPromptLibraryVisible by remember { mutableStateOf(isPromptLibraryVisibleCheck(chatScreenTitle)) }
-    var isSocialMediaListVisible by remember { mutableStateOf(chatScreenTitle=="Social media writer") }
-
+    var isSocialMediaListVisible by remember { mutableStateOf(chatScreenTitle == "Social media writer") }
     var message = remember { mutableStateOf("") }
     var isTTS by remember { mutableStateOf(false) }
-    var messages by remember {
-        mutableStateOf(emptyList<String>()) }
     var showDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current // Get the context here
+    val context = LocalContext.current
 
     Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF040605)) {
-        Scaffold (topBar = {
+        Scaffold(topBar = {
             TopAppBar(
                 colors = topAppBarColors(
                     containerColor = Color(0xFF040605),
                     titleContentColor = Color.White,
                 ),
                 title = {
-                    Text("$chatScreenTitle", fontSize = 24.sp, fontWeight = FontWeight.Normal )
+                    Text(chatScreenTitle, fontSize = 24.sp, fontWeight = FontWeight.Normal)
                 },
                 actions = {
                     IconButton(
-                        onClick = { isTTS=!isTTS },
+                        onClick = { isTTS = !isTTS },
                         modifier = Modifier
                             .size(54.dp)
                             .padding(end = 16.dp)
@@ -117,21 +146,20 @@ fun ChatScreen(navController: NavHostController, chatScreenTitle: String, modelP
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.baseline_volume_up_24),
-                            contentDescription = "Speech to text",
+                            contentDescription = "Text-to-speech toggle",
                             tint = if (isTTS) Color.Black else Color(0xFF5abebc),
                             modifier = Modifier.size(28.dp)
                         )
                     }
                 }
-
-
             )
-        }){ paddingValues ->
+        }) { paddingValues ->
 
-            Column(modifier = Modifier
-                .fillMaxSize()
-                .background(color = Color(0xFF040605))) {
-
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = Color(0xFF040605))
+            ) {
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -140,38 +168,40 @@ fun ChatScreen(navController: NavHostController, chatScreenTitle: String, modelP
                         .padding(8.dp),
                     reverseLayout = true
                 ) {
-                    items(uiState.messages) { msg ->
-                        ChatBubble(message = msg)
+                    items(uiState.messages) { chat ->
+                        ChatItem(chat)
                     }
                 }
 
-
-                if (isPromptLibraryVisible){
+                if (isPromptLibraryVisible) {
                     PromptLibrary(navController)
-
                 }
-                if (isSocialMediaListVisible){
-                    SocialMediaList(socialMediaNames = listOf("Instagram", "LinkedIn", "Twitter", "Reddit"))
+                if (isSocialMediaListVisible) {
+                    SocialMediaList(socialMediaNames = listOf("Instagram", "LinkedIn", "Twitter", "Reddit"), onSocialMediaSelected = { selectedMedia ->
+                        addOnPrompt =  promptMap[selectedMedia] ?: ""
+                    })
                 }
 
-                ChatBox(messageState = message, onSendClick = {
-                    if (message.value.isNotEmpty()) {
-                        isPromptLibraryVisible = false
-                        isSocialMediaListVisible =false
-                        messages = messages.toMutableList().apply { add(message.value) }
-                        message.value = ""
-
+                ChatBox(
+                    userMessage = userMessage,
+                    onUserMessageChange = { userMessage = it },
+                    onSendClick = {
+                        if (userMessage.isNotBlank()) {
+                            isPromptLibraryVisible = false
+                            isSocialMediaListVisible = false
+                            onSendMessage(addOnPrompt, userMessage)
+                            userMessage = ""
+                        }
+                    },
+                    onSpeechToTextClick = {
+                        showDialog = true
                     }
-                }, onSpeechToTextClick = {
-                    showDialog = true
-                })
-
+                )
 
                 if (isTTS) {
                     rememberTTS(context, isTTS)?.speak(message.value, TextToSpeech.QUEUE_FLUSH, null, "TTS_MESSAGE_ID")
                 }
 
-                // Show Speech to Text dialog
                 if (showDialog) {
                     SpeechToTextDialog(onDismiss = { showDialog = false }, context = context) { recognizedText ->
                         message.value = recognizedText
@@ -179,14 +209,17 @@ fun ChatScreen(navController: NavHostController, chatScreenTitle: String, modelP
                     }
                 }
             }
-
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatBox(messageState: MutableState<String>, onSendClick: () -> Unit, onSpeechToTextClick: () -> Unit) {
+fun ChatBox(
+    userMessage: String,
+    onUserMessageChange: (String) -> Unit,
+    onSendClick: () -> Unit,
+    onSpeechToTextClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -194,8 +227,8 @@ fun ChatBox(messageState: MutableState<String>, onSendClick: () -> Unit, onSpeec
         verticalAlignment = Alignment.CenterVertically
     ) {
         TextField(
-            value = messageState.value,
-            onValueChange = { messageState.value = it },
+            value = userMessage,
+            onValueChange = onUserMessageChange,
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(28.dp),
             placeholder = { Text("Type your message...", modifier = Modifier.padding(start = 10.dp), color = Color.White) },
@@ -209,7 +242,7 @@ fun ChatBox(messageState: MutableState<String>, onSendClick: () -> Unit, onSpeec
             ),
             singleLine = false,
             textStyle = LocalTextStyle.current.copy(
-                textAlign = TextAlign.Start // Ensures text is left-aligned
+                textAlign = TextAlign.Start
             )
         )
 
@@ -307,73 +340,41 @@ fun startSpeechToText(context: Context, onResult: (String) -> Unit) {
 }
 
 @Composable
-fun ChatBubble(message: ChatMessage) {
+fun ChatBubble(message: String) {
 
-
-    val backgroundColor = if (message.isFromUser) {
-        MaterialTheme.colorScheme.tertiaryContainer
-    } else {
-        MaterialTheme.colorScheme.secondaryContainer
-    }
-
-    val bubbleShape = if (message.isFromUser) {
-        RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
-    } else {
-        RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
-    }
-    val horizontalAlignment = if (message.isFromUser) {
-        Alignment.End
-    } else {
-        Alignment.Start
-    }
-
-
-    Column(
-        horizontalAlignment = horizontalAlignment,
+    Box(
         modifier = Modifier
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-            .fillMaxWidth()
+            .padding(4.dp)
+            .background(Color(0xFF161719), shape = RoundedCornerShape(18.dp))
+            .padding(16.dp)
     ) {
-        val author = if (message.isFromUser) {
-            stringResource(R.string.user_label)
-        } else {
-            stringResource(R.string.model_label)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Image(
+                painter = painterResource(R.drawable.bot),
+                contentDescription = "Bot Icon",
+                modifier = Modifier
+                    .padding(end = 8.dp)
+                    .size(width = 40.dp, height = 40.dp)
+                    .background(color = Color.White, shape = RoundedCornerShape(100.dp))
+            )
+            Text(text = message, fontSize = 16.sp, color = Color.White, modifier = Modifier.weight(1f))
         }
-        Text(
-            text = author,
-            style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(bottom = 4.dp)
+
+        Icon(
+            painter = painterResource(id = R.drawable.outline_copy),
+            contentDescription = "Copy",
+            tint = Color(0xFF5abebc),
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(14.dp)
         )
-        Row {
-            BoxWithConstraints {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = backgroundColor),
-                    shape = bubbleShape,
-                    modifier = Modifier.widthIn(0.dp, maxWidth * 0.9f)
-                ) {
-                    if (message.isLoading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    } else {
-                        Text(
-                            text = message.message,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-                }
-            }
-        }
     }
-
 }
 
-@Preview
-@Composable
-fun Acha(){
-    ChatBubble(message = ChatMessage(author = "", id = "", rawMessage = "This is sample message"))
-
-}
 
 @Composable
 fun SendButton(onSendClick: () -> Unit) {
@@ -410,7 +411,7 @@ fun PromptLibrary(navController: NavHostController) {
                 text = "Prompt library",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White // Adjust the color according to your theme
+                color = Color.White
             )
             Icon(
                 painter = painterResource(id = R.drawable.baseline_arrow_forward_24), // Replace with your icon resource
@@ -474,6 +475,66 @@ fun rememberTTS(context: Context, isTTS: Boolean): TextToSpeech? {
 
     return tts
 }
+@Composable
+fun ChatItem(
+    chatMessage: ChatMessage
+) {
+    val backgroundColor = if (chatMessage.isFromUser) {
+        MaterialTheme.colorScheme.tertiaryContainer
+    } else {
+        MaterialTheme.colorScheme.secondaryContainer
+    }
+
+    val bubbleShape = if (chatMessage.isFromUser) {
+        RoundedCornerShape(20.dp, 4.dp, 20.dp, 20.dp)
+    } else {
+        RoundedCornerShape(4.dp, 20.dp, 20.dp, 20.dp)
+    }
+
+    val horizontalAlignment = if (chatMessage.isFromUser) {
+        Alignment.End
+    } else {
+        Alignment.Start
+    }
+
+    Column(
+        horizontalAlignment = horizontalAlignment,
+        modifier = Modifier
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .fillMaxWidth()
+    ) {
+        val author = if (chatMessage.isFromUser) {
+            stringResource(R.string.user_label)
+        } else {
+            stringResource(R.string.model_label)
+        }
+        Text(
+            text = author,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+        Row {
+            BoxWithConstraints {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = backgroundColor),
+                    shape = bubbleShape,
+                    modifier = Modifier.widthIn(0.dp, maxWidth * 0.9f)
+                ) {
+                    if (chatMessage.isLoading) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    } else {
+                        Text(
+                            text = chatMessage.message,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 
 
@@ -487,20 +548,44 @@ fun isPromptLibraryVisibleCheck(chatScreenTitle: String): Boolean {
 
 
 @Composable
-fun SocialMediaNameBox(socialMediaName : String = "Facebook"){
+fun SocialMediaNameBox(
+    socialMediaName: String,
+    isSelected: Boolean = false,
+    onClick: () -> Unit
+) {
     Spacer(Modifier.width(8.dp))
-    Box(modifier = Modifier.background(shape = RoundedCornerShape(28.dp), color = Color(0xFF161719))){
-        Text(text = socialMediaName, color = Color(0xFFf5f5f5), fontSize = 18.sp, modifier = Modifier.padding(horizontal =10.dp).padding(8.dp))
+    Box(
+        modifier = Modifier
+            .clickable { onClick() }
+            .background(
+                shape = RoundedCornerShape(28.dp),
+                color = Color(0xFF161719)
+            )
+            .border(
+                width = if (isSelected) 2.dp else 0.dp,
+                color = if (isSelected) Color.White else Color.Transparent,
+                shape = RoundedCornerShape(28.dp)
+            )
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = socialMediaName,
+            color = Color(0xFFf5f5f5),
+            fontSize = 18.sp
+        )
     }
-
 }
 
-
 @Composable
-fun SocialMediaList(socialMediaNames: List<String>) {
+fun SocialMediaList(socialMediaNames: List<String>, onSocialMediaSelected: (String) -> Unit) {
+    var selectedMedia by remember { mutableStateOf<String?>(null) }
+
     LazyRow(modifier = Modifier.fillMaxWidth()) {
         items(socialMediaNames) { name ->
-            SocialMediaNameBox(name)
+            SocialMediaNameBox(socialMediaName = name,
+                isSelected = name==selectedMedia,
+                onClick = {selectedMedia=name
+                    onSocialMediaSelected(name)})
         }
     }
     Spacer(Modifier.height(16.dp))

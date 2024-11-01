@@ -1,8 +1,10 @@
-package com.example.aiapp.Model
+package com.example.aiapp.others
 
-import com.example.aiapp.View.Chat.USER_PREFIX
 import java.util.UUID
 
+/**
+ * Used to represent a ChatMessage
+ */
 data class ChatMessage(
     val id: String = UUID.randomUUID().toString(),
     val rawMessage: String = "",

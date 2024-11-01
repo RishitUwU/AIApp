@@ -1,7 +1,6 @@
-package com.example.aiapp.View.Chat
+package com.example.aiapp.others
 
 import androidx.compose.runtime.toMutableStateList
-import com.example.aiapp.Model.ChatMessage
 
 const val USER_PREFIX = "user"
 const val MODEL_PREFIX = "model"

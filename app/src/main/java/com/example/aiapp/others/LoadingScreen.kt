@@ -1,4 +1,4 @@
-package com.example.aiapp.View.Main
+package com.example.aiapp.others
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,19 +16,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.aiapp.Model.InferenceModel
-import com.example.aiapp.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Composable
 internal fun LoadingRoute(
-    onModelLoaded: () -> Unit = { },
-    modelPath: String
-
+    onModelLoaded: () -> Unit = { }
 ) {
     val context = LocalContext.current.applicationContext
     var errorMessage by remember { mutableStateOf("") }
@@ -43,7 +38,7 @@ internal fun LoadingRoute(
         // Create the LlmInference in a separate thread
         withContext(Dispatchers.IO) {
             try {
-                InferenceModel.getInstance(context, modelPath )
+                InferenceModel.getInstance(context)
                 // Notify the UI that the model has finished loading
                 withContext(Dispatchers.Main) {
                     onModelLoaded()
@@ -62,7 +57,7 @@ fun LoadingIndicator() {
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = stringResource(R.string.loading_model),
+            text = "loading model...",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier
                 .padding(bottom = 8.dp)

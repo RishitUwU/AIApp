@@ -1,8 +1,6 @@
-package com.example.aiapp.Model
+package com.example.aiapp.others
 
-//import androidx.media3.common.util.Log
 import android.content.Context
-import android.util.Log
 import com.google.mediapipe.tasks.genai.llminference.LlmInference
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -10,17 +8,12 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import java.io.File
 
-//import android.util.Log
-
-
-class InferenceModel private constructor(context: Context, private var modelPath: String) {
+class InferenceModel private constructor(context: Context) {
     private var llmInference: LlmInference
 
-
     private val modelExists: Boolean
-        get() = File("/storage/emulated/0/Download/falcon_cpu.bin").exists().also {
-            Log.d("InferenceModel", "Checking if model exists at path: , exists: $it")
-        }
+        get() = File(MODEL_PATH).exists()
+
     private val _partialResults = MutableSharedFlow<Pair<String, Boolean>>(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -28,13 +21,12 @@ class InferenceModel private constructor(context: Context, private var modelPath
     val partialResults: SharedFlow<Pair<String, Boolean>> = _partialResults.asSharedFlow()
 
     init {
-        Log.d("InferenceModel", "Initializing with model path: $modelPath")
         if (!modelExists) {
-            throw IllegalArgumentException("Model not found at path: $modelPath")
+            throw IllegalArgumentException("Model not found at path: $MODEL_PATH")
         }
 
         val options = LlmInference.LlmInferenceOptions.builder()
-            .setModelPath("/storage/emulated/0/Download/falcon_cpu.bin")
+            .setModelPath(MODEL_PATH)
             .setMaxTokens(1024)
             .setResultListener { partialResult, done ->
                 _partialResults.tryEmit(partialResult to done)
@@ -42,31 +34,26 @@ class InferenceModel private constructor(context: Context, private var modelPath
             .build()
 
         llmInference = LlmInference.createFromOptions(context, options)
-        Log.d("InferenceModel", "LLM inference created successfully with model path: $modelPath")
-
     }
 
     fun generateResponseAsync(prompt: String) {
+        // Add the gemma prompt prefix to trigger the response.
 
-        llmInference.generateResponseAsync(prompt)
+        val gemmaPrompt = prompt + "<start_of_turn>model\n"
+        llmInference.generateResponseAsync(gemmaPrompt)
     }
 
     companion object {
-        // NB: Make sure the filename is unique per model you use!
+        // NB: Make sure the filename is *unique* per model you use!
         // Weight caching is currently based on filename alone.
-
-        //        private const val MODEL_PATH = "/data/local/tmp/llm/falcon_cpu.bin"
+        private const val MODEL_PATH = "/data/local/tmp/llm/model.bin"
         private var instance: InferenceModel? = null
 
-        fun getInstance(context: Context,modelPath: String): InferenceModel {
-            Log.d("InferenceModel", "getInstance called with model path: $modelPath")
-
+        fun getInstance(context: Context): InferenceModel {
             return if (instance != null) {
                 instance!!
             } else {
-                Log.d("InferenceModel", "Creating new instance with model path: $modelPath")
-
-                InferenceModel(context,"/storage/emulated/0/Download/falcon_cpu.bin").also { instance = it }
+                InferenceModel(context).also { instance = it }
             }
         }
     }
