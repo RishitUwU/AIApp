@@ -1,5 +1,6 @@
-package com.example.aiapp.others
+package com.example.aiapp.Model
 
+import com.example.aiapp.ViewModel.USER_PREFIX
 import java.util.UUID
 
 /**

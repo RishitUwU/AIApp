@@ -1,7 +1,9 @@
 package com.example.aiapp.View.Main
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -45,7 +48,7 @@ fun ExploreScreen(navController: NavHostController) {
 
 
     val context = LocalContext.current
-
+    val scaffoldState = rememberScaffoldState()
 
 
 
@@ -100,7 +103,9 @@ fun ExploreScreen(navController: NavHostController) {
                     .size(180.dp)
                     .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
                     .clickable {
-                        navController.navigate("searchOnline")
+//                        navController.navigate("searchOnline")
+                        Toast.makeText(context, "Coming soon...", Toast.LENGTH_SHORT).show()
+
 
                     }
                 ){
@@ -114,10 +119,11 @@ fun ExploreScreen(navController: NavHostController) {
                             .height(180.dp)
                             .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
                             .clickable {
-                                navController.navigate("socialMediaWriter")
+                               navController.navigate("socialMediaWriter")
 
                             }
-                    ){                        BoxContent("Write social media content", iconResId = R.drawable.outline_writing)
+                    ){
+                        BoxContent("Write social media content", iconResId = R.drawable.outline_writing)
                     }
 
                     Spacer(modifier = Modifier.size(8.dp))
@@ -142,7 +148,6 @@ fun ExploreScreen(navController: NavHostController) {
     }
 
 }
-
 
 @Composable
 fun BoxContent(boxTextContent1: String, @DrawableRes iconResId: Int ){

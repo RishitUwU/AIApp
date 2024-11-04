@@ -1,8 +1,10 @@
-package com.example.aiapp.others
+package com.example.aiapp.View.Main
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -15,9 +17,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.aiapp.others.InferenceModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -54,15 +58,18 @@ internal fun LoadingRoute(
 fun LoadingIndicator() {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.background(color = Color(0xFF161719)).fillMaxSize()
     ) {
         Text(
             text = "loading model...",
             style = MaterialTheme.typography.titleMedium,
+            color = Color.White,
             modifier = Modifier
                 .padding(bottom = 8.dp)
+
         )
-        CircularProgressIndicator()
+        CircularProgressIndicator(color = Color(0xFF5abebc))
     }
 }
 
@@ -71,12 +78,14 @@ fun ErrorMessage(
     errorMessage: String
 ) {
     Box(
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.background(color = Color(0xFF161719))
     ) {
         Text(
             text = errorMessage,
             color = MaterialTheme.colorScheme.error,
             textAlign = TextAlign.Center
+
         )
     }
 }

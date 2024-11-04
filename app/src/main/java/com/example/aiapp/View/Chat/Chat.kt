@@ -62,17 +62,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.aiapp.Model.ChatMessage
 import com.example.aiapp.R
-import com.example.aiapp.others.ChatMessage
-import com.example.aiapp.others.ChatViewModel
-import com.example.aiapp.others.UiState
+import com.example.aiapp.ViewModel.ChatViewModel
+import com.example.aiapp.ViewModel.UiState
 import java.util.Locale
 
 
@@ -82,13 +86,15 @@ internal fun ChatRoute(
         factory = ChatViewModel.getFactory(LocalContext.current.applicationContext)
     ),
     navController: NavHostController,
-    chatScreenTitle: String
+    chatScreenTitle: String,
+    promptText: String=""
 ) {
     val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
     val textInputEnabled by chatViewModel.isTextInputEnabled.collectAsStateWithLifecycle()
     ChatScreen(
-        uiState,
-        textInputEnabled,
+        uiState = uiState,
+        textInputEnabled = textInputEnabled,
+        initialAddOnPrompt = promptText,
         onSendMessage = { addOnPrompt, message ->
             chatViewModel.sendMessage(addOnPrompt =addOnPrompt , userMessage = message)
         },
@@ -98,11 +104,12 @@ internal fun ChatRoute(
     )
 }
 val promptMap = mapOf(
-    "Instagram" to "Instagram prompt text here",
-    "LinkedIn" to "Please ignore all previous instructions. Please respond only in the English language. You are a LinkedIn content creator.   Do not self reference. Do not explain what you are doing. Your content should be engaging, informative, and relevant LinkedIn posts for various professionals across different industries. Please include industry insights, personal experiences, and thought leadership while maintaining a genuine and conversational tone. Please create a post about the  for the  industry. Add emojis to the content when appropriate and write from a personal experience. The content should be between 390 - 400 words long and spaced out so that it's easy for readers to scan through. Please add relevant hashtags to the post and encourage the readers to comment.",
-    "Twitter" to "Twitter prompt text here",
-    "Reddit" to "Reddit prompt text here"
+    "Instagram" to "Create an engaging Instagram caption that grabs attention.",
+    "LinkedIn" to "Write a professional LinkedIn post that explains",
+    "Twitter" to "Craft a concise and impactful tweet for Twitter.",
+    "Reddit" to "Compose an engaging Reddit post that sparks discussion."
 )
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -110,12 +117,13 @@ val promptMap = mapOf(
 fun ChatScreen(
     uiState: UiState,
     textInputEnabled: Boolean = true,
+    initialAddOnPrompt: String,
     onSendMessage: (String, String) -> Unit,
     navController: NavHostController,
     chatScreenTitle: String
 ) {
     var userMessage by rememberSaveable { mutableStateOf("") }
-    var addOnPrompt by rememberSaveable { mutableStateOf("") }
+    var addOnPrompt by rememberSaveable { mutableStateOf(initialAddOnPrompt) }
     var isPromptLibraryVisible by remember { mutableStateOf(isPromptLibraryVisibleCheck(chatScreenTitle)) }
     var isSocialMediaListVisible by remember { mutableStateOf(chatScreenTitle == "Social media writer") }
     var message = remember { mutableStateOf("") }
@@ -169,7 +177,7 @@ fun ChatScreen(
                     reverseLayout = true
                 ) {
                     items(uiState.messages) { chat ->
-                        ChatItem(chat)
+                        ChatItem(chat, isTTS, context)
                     }
                 }
 
@@ -198,9 +206,6 @@ fun ChatScreen(
                     }
                 )
 
-                if (isTTS) {
-                    rememberTTS(context, isTTS)?.speak(message.value, TextToSpeech.QUEUE_FLUSH, null, "TTS_MESSAGE_ID")
-                }
 
                 if (showDialog) {
                     SpeechToTextDialog(onDismiss = { showDialog = false }, context = context) { recognizedText ->
@@ -477,7 +482,9 @@ fun rememberTTS(context: Context, isTTS: Boolean): TextToSpeech? {
 }
 @Composable
 fun ChatItem(
-    chatMessage: ChatMessage
+    chatMessage: ChatMessage,
+    isTTS: Boolean,
+    context: Context
 ) {
     val backgroundColor = if (chatMessage.isFromUser) {
         MaterialTheme.colorScheme.tertiaryContainer
@@ -497,6 +504,14 @@ fun ChatItem(
         Alignment.Start
     }
 
+
+
+    var lastSpokenMessage by remember { mutableStateOf("") }
+    val tts = rememberTTS(context, isTTS)
+
+
+
+
     Column(
         horizontalAlignment = horizontalAlignment,
         modifier = Modifier
@@ -513,6 +528,7 @@ fun ChatItem(
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(bottom = 4.dp)
         )
+
         Row {
             BoxWithConstraints {
                 Card(
@@ -525,18 +541,75 @@ fun ChatItem(
                             modifier = Modifier.padding(16.dp)
                         )
                     } else {
-                        Text(
-                            text = chatMessage.message,
-                            modifier = Modifier.padding(16.dp)
-                        )
+                        MessageText(text = chatMessage.message)
+
                     }
                 }
             }
         }
+
     }
+
+    if (isTTS && chatMessage.message != lastSpokenMessage) {
+        LaunchedEffect(chatMessage.message) {
+            val newTextToSpeak = chatMessage.message.removePrefix(lastSpokenMessage)
+
+            lastSpokenMessage = chatMessage.message
+
+            tts?.speak(
+                newTextToSpeak,
+                TextToSpeech.QUEUE_ADD,
+                null,
+                "TTS_MESSAGE_ID"
+            )
+        }
+    }
+
+
+
+
 }
 
+@Composable
+fun MessageText(text: String) {
+    val bulletPointRegex = Regex("^\\* (.+)")
+    val boldRegex = Regex("\\*\\*(.*?)\\*\\*")
 
+    val annotatedString = buildAnnotatedString {
+        val lines = text.split("\n")
+
+        for (line in lines) {
+            val bulletMatch = bulletPointRegex.find(line)
+            if (bulletMatch != null) {
+                append("• ")
+                appendStyledText(boldRegex, bulletMatch.groupValues[1])
+            } else {
+                appendStyledText(boldRegex, line)
+            }
+            append("\n")
+        }
+    }
+
+    Text(
+        text = annotatedString,
+        modifier = Modifier.padding(16.dp)
+    )
+}
+
+private fun AnnotatedString.Builder.appendStyledText(
+    boldRegex: Regex,
+    text: String
+) {
+    var lastIndex = 0
+    for (match in boldRegex.findAll(text)) {
+        append(text.substring(lastIndex, match.range.first))
+        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+            append(match.groupValues[1])
+        }
+        lastIndex = match.range.last + 1
+    }
+    append(text.substring(lastIndex))
+}
 
 
 

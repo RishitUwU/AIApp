@@ -44,7 +44,6 @@ fun NewNoteScreen(noteDao: NoteDao, onBack: () -> Unit) {
     var content by remember { mutableStateOf(TextFieldValue("")) }
     val coroutineScope = rememberCoroutineScope()
 
-    // Function to save note
     fun saveNote() {
         coroutineScope.launch {
             if (title.text.isNotEmpty() || content.text.isNotEmpty()) {
@@ -65,8 +64,8 @@ fun NewNoteScreen(noteDao: NoteDao, onBack: () -> Unit) {
                     title = { Text("New Note", color = Color.White) },
                     navigationIcon = {
                         IconButton(onClick = {
-                            saveNote()  // Save the note before navigating back
-                            onBack()    // Call onBack after saving
+                            saveNote()
+                            onBack()
                         }) {
                             Icon(imageVector = Icons.Default.ArrowBack, tint = Color.White, contentDescription = "Back")
                         }
@@ -84,18 +83,20 @@ fun NewNoteScreen(noteDao: NoteDao, onBack: () -> Unit) {
                 ) {
                     BasicTextField(
                         value = title,
+
                         onValueChange = { title = it },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(60.dp)
                             .padding(end = 12.dp, start = 12.dp)
-                            .background(Color(0xFF2A2B2E), shape = RoundedCornerShape(8.dp)),
-                        textStyle = LocalTextStyle.current.copy(color = Color.White),
+                            .background(Color(0xFF2A2B2E), shape = RoundedCornerShape(8.dp))
+                            .padding(16.dp),
+                        textStyle = LocalTextStyle.current.copy(color = Color.White, fontSize =22.sp),
                         decorationBox = {
                             innerTextField ->
                             if (title.text.isEmpty()) {
 
-                                Text("Title", color = Color.Gray, fontSize = 22.sp, modifier = Modifier.padding(start = 12.dp, top = 8.dp))
+                                Text("Title", color = Color.Gray, fontSize = 22.sp)
                             }
                             innerTextField()
                         }

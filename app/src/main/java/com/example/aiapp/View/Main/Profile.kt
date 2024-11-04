@@ -44,13 +44,14 @@ fun ProfileScreen(){
                     Text("Profile", fontSize = 24.sp, fontWeight = FontWeight.Normal)
                 }
             )
-        }) { paddingValues ->
+        }, containerColor = Color(0xFF040605)
+            ) { paddingValues ->
 
             Column (modifier = Modifier.fillMaxHeight().padding(paddingValues).background(color = Color(0xFF040605))){
                 Row(modifier = Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("Upgrade your account", color = Color.White, fontSize = 16.sp, modifier = Modifier.weight(1f))
                     IconButton(onClick = {}) {
-                        Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = "upgrade accoutn", tint = Color.White, modifier = Modifier.size(24.dp))
+                        Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = "upgrade account", tint = Color.White, modifier = Modifier.size(24.dp))
                     }
 
                 }
