@@ -10,8 +10,11 @@ import ai.soundcast.offlinegpt.View.Main.ProfileScreen
 import ai.soundcast.offlinegpt.View.Main.SettingsScreen
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -96,6 +99,18 @@ class MainActivity : ComponentActivity() {
 
 
 }
+
+
+fun requestBatteryOptimizationExemption(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK // Add this flag
+        }
+        context.startActivity(intent)
+    }
+}
+
+
 @Composable
 fun ExploreNav() {
     val navController = rememberNavController()
@@ -184,6 +199,11 @@ fun downloadFileIfNotExists(
 
     if (isPowerSavingModeEnabled(context)) Toast.makeText(context, "Disable power saving to download in background", Toast.LENGTH_LONG).show()
 
+
+    Toast.makeText(context, "Select don't optimize to download model in background", Toast.LENGTH_LONG).show()
+
+
+    requestBatteryOptimizationExemption(context)
     CoroutineScope(Dispatchers.IO).launch {
         try {
             val url = URL(fileUrl)

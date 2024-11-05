@@ -1,5 +1,6 @@
 package ai.soundcast.offlinegpt.View.Main
 
+import ai.soundcast.offlinegpt.others.InferenceModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import ai.soundcast.offlinegpt.others.InferenceModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -81,6 +81,7 @@ fun ErrorMessage(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.background(color = Color(0xFF161719))
+            .fillMaxSize()
     ) {
         Text(
             text = errorMessage,
