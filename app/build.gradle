@@ -10,11 +10,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.aiapp'
+    namespace 'ai.soundcast.offlinegpt'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.aiapp"
+        applicationId "ai.soundcast.offlinegpt"
         minSdk 24
         targetSdk 34
         versionCode 1
