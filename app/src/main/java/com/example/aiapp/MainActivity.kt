@@ -100,7 +100,15 @@ fun ExploreNav() {
 
     NavHost(navController = navController, startDestination = "explore") {
         composable("explore") { ExploreScreen(navController) }
-        composable("chat") { ChatRoute(navController =navController, chatScreenTitle ="Chat") }
+        composable(
+            route = "chat?promptText={promptText}",
+            arguments = listOf(navArgument("promptText") { defaultValue = "" })
+        ) { backStackEntry ->
+            val promptText = backStackEntry.arguments?.getString("promptText") ?: ""
+            ChatRoute(navController = navController, chatScreenTitle = "Chat", promptText = promptText)
+        }
+        composable("start_screen") { LoadingRoute(onModelLoaded = {navController.navigate("chat")}) }
+        composable("promptLibrary") { PromptLibraryScreen(navController=navController) }
         composable("socialMediaWriter") { ChatRoute(navController =navController, chatScreenTitle ="Social media writer") }
         composable("chatWithYourself") { ChatRoute(navController =navController, chatScreenTitle ="Chat with yourself") }
         composable("searchOnline") { ChatRoute(navController =navController, chatScreenTitle ="Search online") }

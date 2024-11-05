@@ -1,7 +1,6 @@
 package com.example.aiapp.View.Main
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.annotation.DrawableRes
@@ -92,13 +91,17 @@ fun ExploreScreen(navController: NavHostController) {
                             .fillMaxWidth(1f)
                             .height(180.dp)
                             .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
+                            .clickable {
+                                Toast.makeText(context, "Coming Soon...", Toast.LENGTH_SHORT).show()
+
+                            }
                     ){
                         BoxContent("Schedule your day", iconResId = R.drawable.outline_calendar)
 
                     }
 
                 }
-                Spacer(modifier = Modifier.size(8.dp))
+                Spacer(modifier = Modifier.size(8.dp)) 
                 Box(modifier = Modifier.fillMaxWidth()
                     .size(180.dp)
                     .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
@@ -132,7 +135,9 @@ fun ExploreScreen(navController: NavHostController) {
                             .fillMaxWidth(1f)
                             .height(180.dp)
                             .clickable {
-                                navController.navigate("chatWithYourself")
+//                                navController.navigate("chatWithYourself")
+                                Toast.makeText(context, "Coming soon...", Toast.LENGTH_SHORT).show()
+
 
                             }
                             .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
@@ -140,6 +145,20 @@ fun ExploreScreen(navController: NavHostController) {
                         BoxContent("Chat with yourself", iconResId = R.drawable.outline_brain)
 
                     }
+                }
+
+                Spacer(modifier = Modifier.size(8.dp))
+                Box(modifier = Modifier.fillMaxWidth()
+                    .size(180.dp)
+                    .background(Color(0xFF161719), shape = RoundedCornerShape(14.dp))
+                    .clickable {
+                        navController.navigate("start_screen")
+
+
+
+                    }
+                ){
+                    BoxContent("Search offline", iconResId = R.drawable.outline_search)
 
                 }
 
