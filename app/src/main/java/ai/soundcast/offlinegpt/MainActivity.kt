@@ -174,6 +174,7 @@ fun DownloadFileDialog(isDownloading: Boolean, progress: Int) {
             }
         }
     }
+
 }
 
 
@@ -363,17 +364,20 @@ fun BottomNavigationBar(selectedItem: Int, onItemSelected: (Int) -> Unit) {
         BottomNavigationItem(
             selected = selectedItem == 0,
             onClick = { onItemSelected(0) },
-            icon = { Icon(painter = painterResource(id = R.drawable.outline_explore), contentDescription = "Home", tint = if (selectedItem == 0) Color(0xFF5abebc) else Color.White, modifier = Modifier.size(20.dp)) },
+            label = { Text("Home", color = if (selectedItem == 0) Color(0xFF5abebc) else Color.White) },
+            icon = { Icon(painter = painterResource(id = R.drawable.outline_home), contentDescription = "Home", tint = if (selectedItem == 0) Color(0xFF5abebc) else Color.White, modifier = Modifier.size(20.dp)) },
         )
         BottomNavigationItem(
             selected = selectedItem == 1,
             onClick = { onItemSelected(1) },
+            label = { Text("Chat", color = if (selectedItem == 1) Color(0xFF5abebc) else Color.White) },
             icon = { Icon(painter = painterResource(id = R.drawable.outline_chat), contentDescription = "Search",tint = if (selectedItem == 1) Color(0xFF5abebc) else Color.White, modifier = Modifier.size(24.dp)) },
         )
 
         BottomNavigationItem(
             selected = selectedItem == 3,
             onClick = { onItemSelected(3) },
+            label = { Text("Profile", color = if (selectedItem == 3) Color(0xFF5abebc) else Color.White) },
             icon = { Icon(painter = painterResource(id = R.drawable.outline_profile), contentDescription = "Profile", tint = if (selectedItem == 3) Color(0xFF5abebc) else Color.White, modifier = Modifier.size(24.dp)) },
         )
     }

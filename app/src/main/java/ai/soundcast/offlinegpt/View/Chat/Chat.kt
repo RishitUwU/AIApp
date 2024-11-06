@@ -1,5 +1,9 @@
 package ai.soundcast.offlinegpt.View.Chat
 
+import ai.soundcast.offlinegpt.Model.ChatMessage
+import ai.soundcast.offlinegpt.R
+import ai.soundcast.offlinegpt.ViewModel.ChatViewModel
+import ai.soundcast.offlinegpt.ViewModel.UiState
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -73,10 +77,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import ai.soundcast.offlinegpt.Model.ChatMessage
-import ai.soundcast.offlinegpt.R
-import ai.soundcast.offlinegpt.ViewModel.ChatViewModel
-import ai.soundcast.offlinegpt.ViewModel.UiState
 import java.util.Locale
 
 
@@ -143,7 +143,8 @@ fun ChatScreen(
                 },
                 actions = {
                     IconButton(
-                        onClick = { isTTS = !isTTS },
+                        onClick = { isTTS = isTTS
+                                  Toast.makeText(context, "This feature is in testing as of now", Toast.LENGTH_LONG).show()},
                         modifier = Modifier
                             .size(54.dp)
                             .padding(end = 16.dp)
