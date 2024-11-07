@@ -11,6 +11,7 @@ import ai.soundcast.offlinegpt.View.Main.SettingsScreen
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
@@ -118,13 +119,23 @@ fun ExploreNav() {
     NavHost(navController = navController, startDestination = "explore") {
         composable("explore") { ExploreScreen(navController) }
         composable(
-            route = "chat?promptText={promptText}",
-            arguments = listOf(navArgument("promptText") { defaultValue = "" })
+            route = "chat?promptText={promptText}&searchText={searchText}",
+            arguments = listOf(
+                navArgument("promptText") { defaultValue = "" },
+                navArgument("searchText") { defaultValue = "" })
         ) { backStackEntry ->
             val promptText = backStackEntry.arguments?.getString("promptText") ?: ""
-            ChatRoute(navController = navController, chatScreenTitle = "Chat", promptText = promptText)
+            val searchText = backStackEntry.arguments?.getString("searchText") ?: ""
+
+            ChatRoute(navController = navController, chatScreenTitle = "Chat", promptText = promptText, searchText = searchText)
         }
-        composable("start_screen") { LoadingRoute(onModelLoaded = {navController.navigate("chat")}) }
+        composable("start_screen") { LoadingRoute(onModelLoaded = {navController.navigate(route= "chat")}) }
+        composable(route = "start_screen2?searchText={searchText}",
+            arguments = listOf(
+                navArgument("searchText") { defaultValue = "" })
+        ) { backStackEntry ->
+            val searchText = backStackEntry.arguments?.getString("searchText") ?: ""
+            LoadingRoute(onModelLoaded = {navController.navigate(route= "chat?promptText=&searchText=${Uri.encode(searchText)}")}) }
         composable("promptLibrary") { PromptLibraryScreen(navController=navController) }
         composable("socialMediaWriter") { ChatRoute(navController =navController, chatScreenTitle ="Social media writer") }
         composable("chatWithYourself") { ChatRoute(navController =navController, chatScreenTitle ="Chat with yourself") }

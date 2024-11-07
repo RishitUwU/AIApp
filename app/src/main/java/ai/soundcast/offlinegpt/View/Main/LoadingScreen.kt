@@ -3,7 +3,6 @@ package ai.soundcast.offlinegpt.View.Main
 import ai.soundcast.offlinegpt.DownloadFileDialog
 import ai.soundcast.offlinegpt.downloadFileIfNotExists
 import ai.soundcast.offlinegpt.others.InferenceModel
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +13,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +33,7 @@ import java.io.File
 
 @Composable
 internal fun LoadingRoute(
-    onModelLoaded: () -> Unit = { }
+    onModelLoaded: () -> Unit = { },
 ) {
     val context = LocalContext.current.applicationContext
     var errorMessage by remember { mutableStateOf("") }
@@ -42,25 +42,19 @@ internal fun LoadingRoute(
     var downloadProgress by remember { mutableStateOf(0) }
     var showConfirmationDialog by remember { mutableStateOf(false) }
 
-    if (errorMessage != "") {
-        ErrorMessage("Model not found...")
-
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFF161719)
+    ) {
         LaunchedEffect(Unit) {
             val file = File(context.filesDir, "model.bin")
 
-            if (!file.exists()) {
+            if (!file.exists() || file.length() != 1346559040L) {
+                if (file.exists()) file.delete()
                 showConfirmationDialog = true
-
-            } else if (file.exists() && file.length()!=1346559040L){
-                file.delete()
-                showConfirmationDialog = true
+            } else {
+                isDownloaded = true
             }
-        }
-
-
-        LaunchedEffect(Unit) {
-            val file = File(context.filesDir, "model.bin")
-            if (!file.exists()) showConfirmationDialog = true
         }
 
         if (showConfirmationDialog) {
@@ -78,7 +72,8 @@ internal fun LoadingRoute(
                             "https://offlineai.s3.ap-south-1.amazonaws.com/gemma-2b-it-cpu-int4.bin",
                             onDownloadComplete = { success ->
                                 isDownloading = false
-                                if (!success) Log.d("Download progress", "Download failed.")
+                                isDownloaded = success
+                                if (!success) errorMessage = "Download failed."
                             },
                             onProgressUpdate = { progress ->
                                 downloadProgress = progress
@@ -96,49 +91,34 @@ internal fun LoadingRoute(
             )
         }
 
-        DownloadFileDialog(
-            isDownloading = isDownloading,
-            progress = downloadProgress,
-        )
-        isDownloaded=true
-        if (isDownloaded){
+        if (isDownloading) {
+            DownloadFileDialog(
+                isDownloading = isDownloading,
+                progress = downloadProgress,
+            )
+        }
 
-            LaunchedEffect(Unit, block = {
+        if (isDownloaded && !isDownloading) {
+            LoadingIndicator()
+
+            LaunchedEffect(Unit) {
                 withContext(Dispatchers.IO) {
                     try {
                         InferenceModel.getInstance(context)
-                        // Notify the UI that the model has finished loading
                         withContext(Dispatchers.Main) {
                             onModelLoaded()
                         }
                     } catch (e: Exception) {
-                        errorMessage = e.localizedMessage ?: "UnknownError"
-
+                        errorMessage = e.localizedMessage ?: "Unknown error occurred during model initialization."
                     }
                 }
-            })
-
-        }
-
-
-    } else {
-        LoadingIndicator()
-    }
-
-    LaunchedEffect(Unit, block = {
-        withContext(Dispatchers.IO) {
-            try {
-                InferenceModel.getInstance(context)
-                // Notify the UI that the model has finished loading
-                withContext(Dispatchers.Main) {
-                    onModelLoaded()
-                }
-            } catch (e: Exception) {
-                errorMessage = e.localizedMessage ?: "UnknownError"
-
             }
         }
-    })
+
+        if (errorMessage.isNotEmpty()) {
+            ErrorMessage(errorMessage)
+        }
+    }
 }
 
 @Composable

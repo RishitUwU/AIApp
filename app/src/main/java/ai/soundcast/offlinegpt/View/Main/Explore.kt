@@ -7,6 +7,7 @@ import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
@@ -31,12 +32,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
@@ -51,10 +53,12 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import java.io.RandomAccessFile
 
@@ -101,7 +105,7 @@ fun ExploreScreen(navController: NavHostController) {
                     .padding(top = 8.dp, start = 8.dp, end = 8.dp)
             ) {
 
-                SearchBar()
+                SearchBar(navController)
                 Spacer(modifier = Modifier.height(16.dp))
                 FeatureCards(accentColor, disabledColor, navController, context)
 
@@ -161,47 +165,73 @@ fun getTotalRAMFromProcMemInfo(): Long {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBar() {
+fun SearchBar(navController: NavController) {
     var searchText by remember { mutableStateOf("") }
     var isOffline by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        TextField(
+        OutlinedTextField(
             value = searchText,
             onValueChange = { searchText = it },
-            modifier = Modifier.weight(1f),
-            placeholder = { Text("Search online and offline") },
-            colors = TextFieldDefaults.textFieldColors(
-                focusedTextColor = Color.White,
+            modifier = Modifier
+                .weight(1f)
+                .background(Color(0xFF1C1C1C), shape = RoundedCornerShape(28.dp)),
+            placeholder = { Text("Search online and offline", color = Color.Gray) },
+            textStyle = TextStyle(color = Color.White),
+            shape = RoundedCornerShape(24.dp),
+            trailingIcon = {
+                IconButton(onClick = {
+                    Log.d("TAG", "SearchBar: $searchText")
+                    navController.navigate("start_screen2?searchText=${Uri.encode(searchText)}")
+                }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.outline_send),
+                        contentDescription = "Send",
+                        modifier = Modifier.size(20.dp),
+                        tint = Color(0xFF5abebc)
+                    )
+                }
+            },
+            colors = TextFieldDefaults.outlinedTextFieldColors(
+                unfocusedBorderColor = Color.Transparent,
+                focusedBorderColor = Color.Transparent,
                 cursorColor = Color.White,
+                focusedTextColor = Color.White,
                 focusedPlaceholderColor = Color.Gray,
-                containerColor = Color(0xFF1C1C1C)
+                containerColor = Color.Transparent
             )
         )
+
         Spacer(modifier = Modifier.width(8.dp))
+
+        // Offline toggle switch
         Switch(
             checked = isOffline,
             onCheckedChange = {
-                isOffline = false // change to "it" if want to make it functional
-                Toast.makeText(context, "Coming Soon...", Toast.LENGTH_SHORT).show()},
+                isOffline = false
+                Toast.makeText(context, "Coming Soon...", Toast.LENGTH_SHORT).show()
+            },
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color(0xFF5abebc),
                 checkedTrackColor = Color(0xFF5abebc).copy(alpha = 0.5f)
             )
         )
+
         Text(
-            text = "Offline",
+            text = "Online",
             color = Color.Gray,
             fontSize = 14.sp,
             modifier = Modifier.padding(start = 8.dp)
         )
     }
 }
+
 
 @Composable
 fun FeatureCards(accentColor: Color, disabledColor: Color, navController: NavHostController, context: Context) {

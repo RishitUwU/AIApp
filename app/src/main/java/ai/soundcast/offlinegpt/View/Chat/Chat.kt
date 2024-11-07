@@ -11,6 +11,7 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -87,10 +88,19 @@ internal fun ChatRoute(
     ),
     navController: NavHostController,
     chatScreenTitle: String,
-    promptText: String=""
+    promptText: String="",
+    searchText: String=""
 ) {
     val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
     val textInputEnabled by chatViewModel.isTextInputEnabled.collectAsStateWithLifecycle()
+
+
+    LaunchedEffect(searchText) {
+        Log.d("TAG", "$searchText")
+        if (searchText.isNotEmpty()) {
+            chatViewModel.sendMessage( userMessage = searchText)
+        }
+    }
     ChatScreen(
         uiState = uiState,
         textInputEnabled = textInputEnabled,
